@@ -1,0 +1,70 @@
+
+// Root rule for tickets that will include all line definitions
+Ticket:
+	Identifier | Amount | Username | CashCode | MeansOfPayment
+;
+
+// Line definition for the ticket identifier
+Identifier:
+	'Factura Simplificada:' id=ReceiptId Skip
+;
+
+// Line definition for amount to be sent to Cashlogy
+Amount:
+	'TOTAL EUR............:' amount=Number
+;
+
+// Line definition for user identifier
+Username:
+	'Atendido por:' user=Cashier
+;
+
+// Line definition for cash code
+CashCode:
+	'Caja:' cashcode=TillRef
+;
+
+// Line definition for means of payment
+MeansOfPayment:
+	'Modo de pago:' method=Cashier
+;
+
+ReceiptId:
+    /[a-zA-Z0-9-@\/\.\#]+/
+;
+
+Date:
+    /\d{1,4}\W?\d{1,4}\W?\d{1,4}/
+;
+
+Time:
+    /\d{1,2}\W?\d{1,2}(\W?\d{1,2})?(\s)?(am|pm|AM|PM)?/
+;
+
+Number:
+    /-?(\d{1,3}([\,\.]?\d{3})*|(\d+))([\.\,]\d{2})?/
+;
+
+Currency:
+    /([A-Z]{1,3}|\$|\€)?\s?\-?(\d{1,3}([\,\.]\d{3})+|(\d+))([\.\,]\d{1,2})?\s?([A-Z]{1,3}|\$|\€)?/
+;
+
+TillRef:
+    /[a-zA-Z0-9]+([\W]?[a-zA-Z0-9]+){1,2}/
+;
+
+Cashier:
+    /[a-zA-Z]{2,}\s?[a-zA-z0-9]{1,}\'?\-?\.?\s?([a-zA-Z]{2,})?\s?([a-zA-Z]{1,})?/
+;
+
+Percentage:
+    /\-?\s?\%?\s?\d{1,3}([.\,]?\d{1,2})?\s?\%?/
+;
+
+SeparatorLine:
+	/[-=\*]*/
+;
+
+Skip:
+    /.*$/
+;

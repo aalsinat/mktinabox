@@ -1,0 +1,110 @@
+import components.types
+
+/*
+  Ticket DSL grammar.
+
+  Ticket is composed of:
+  	- Header
+  	- Detail
+  	- Means of payment
+  	- Footer
+*/
+
+Ticket:
+	header=Header
+	detail=Detail
+	Footer
+;
+
+Header:
+	company=Company
+	provider=ServiceProvider
+	date=DateInfo
+	ticket=TicketIdentifier
+	waiter=WaiterInfo
+	room=RoomInfo
+;
+
+Company:
+	name=ID
+;
+
+ServiceProvider:
+	name=Name
+	cif=Name
+	address=Name
+;
+
+DateInfo:
+	'FECHA' date=Fecha 'HORA' time=Hora
+;
+
+TicketIdentifier:
+	'FACTURA SIMPLIFICADA' id=Name
+;
+
+WaiterInfo:
+	'VENDEDOR' id=INT Name
+;
+
+RoomInfo:
+	'SALA' room=INT 'MESA' table=INT
+;
+
+Detail:
+	DetailHeader
+	DetailHeaderLine
+	items+=DetailItems
+	DetailTicketsLine
+	base=BaseTotal
+	taxes+=Taxes
+	total=TicketTotal
+	payment=TicketPayment
+;
+
+DetailHeader:
+	'UDS' 'DESCRIPCION' 'PVP' 'IMPORTE'
+;
+
+DetailHeaderLine:
+	/-*/
+;
+
+DetailItems:
+	qty=INT descr=ItemDescription price=Float lineTotal=Float
+;
+
+DetailTicketsLine:
+	/=*/
+;
+
+BaseTotal:
+	'BASE IMPONIBLE' amount=Float
+;
+
+Taxes:
+	'IMPUESTO' perc=Percentage amount=Float
+;
+
+TicketTotal:
+    'TOTAL' amount=Float
+;
+
+TicketPayment:
+    MeansOfPaymentHeader
+    means+=MeansOfPayment
+;
+
+MeansOfPaymentHeader:
+    'FORMA DE PAGO' 'ENTREGADO' 'CAMBIO'
+;
+
+MeansOfPayment:
+    type=MeanOfPayment
+    amount=Float
+    change=Float
+;
+
+Footer:
+    Text
+;

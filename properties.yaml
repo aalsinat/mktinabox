@@ -1,0 +1,25 @@
+# Physical and virtual printer parameters
+printer:
+  inaddr: 127.0.0.1
+  inport: 9100
+  outprinter: FenixSM3000
+  outprotocol: directprint
+# Sets logging behaviour
+log:
+  path: log
+  name: CashlogyTicketsPrinter.log
+  tickets: True
+grammar:
+  path: .
+  name: pos2.tx
+  debug: False
+  parse: False
+  variables:
+    - id
+    - method
+    - amount
+    - cashierRef
+    - tillRef
+cashlogy:
+  hostname: 127.0.0.1
+  port: 8094
