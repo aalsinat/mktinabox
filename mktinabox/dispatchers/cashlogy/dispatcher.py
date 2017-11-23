@@ -1,40 +1,28 @@
-import socket
-
 import os
 import re
+import socket
+
 from escpos.printer import Dummy
 from textx.exceptions import TextXError
 
-from reader.grammar.grammar import Grammar
-from reader.handlers import constants
-from reader.dispatchers.dispatcher import Dispatcher
-from reader.conf import settings, BASE_DIR
+from mktinabox.conf import settings, BASE_DIR
+from mktinabox.dispatchers import Dispatcher
+from mktinabox.grammar.grammar import Grammar
+from mktinabox.handlers import constants
 
 
-class Cashlogy(Dispatcher):
+class Cashlogy(Dispatcher, object):
     """
     Handles echoing messages from a single client.
     """
 
     def __init__(self, printer, sock=None, chunk_size=8192):
-        Dispatcher.__init__(self, sock=sock)
+        super(Cashlogy, self).__init__(sock=sock)
         self.chunk_size = chunk_size
         self.data_to_write = None
         self.printer = printer
         self.dummy = Dummy()
         return
-
-    def writable(self):
-        """We want to write if we have received data."""
-        response = bool(self.data_to_write)
-        self.logger.debug('writable() -> %s', response)
-        return False
-
-    def handle_write(self):
-        """Write as much as possible of the most recent message we have received."""
-        self.logger.debug('handle_write() -> %s', self.data_to_write)
-        if not self.writable():
-            self.handle_close()
 
     def handle_read(self):
         """Read an incoming message from the client and put it into our outgoing queue."""
@@ -55,10 +43,6 @@ class Cashlogy(Dispatcher):
                 self.data_to_write.extend(self.dummy.output)
                 self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
-
-    def handle_close(self):
-        self.logger.debug('handle_close()')
-        self.close()
 
     def remove_end_of_ticket(self, ticket):
         out = re.sub(r"(\x1d\x56\x41).*$", '', ticket)
@@ -89,7 +73,7 @@ class Cashlogy(Dispatcher):
         return attribute in [attr for attr in dir(model) if not attr.startswith('__')]
 
     def parse_ticket(self, ticket):
-        parse_mode = bool(settings.grammar['debug'])
+        parse_mode = eval(settings.grammar['debug'])
         filename = os.path.normpath(os.path.join(BASE_DIR, settings.grammar['path'], settings.grammar['name']))
         grammar = Grammar.from_file(filename)
         ticket_lines = filter(lambda line: len(line.strip()) > 0, re.split(r'[\r\n]+', ticket.decode('Cp1252')))

@@ -1,13 +1,24 @@
+"""
+.. module:: reader
+   :platform: Unix, Windows
+   :synopsis: Main module for capturing receipts coming from POS systems.
+
+.. moduleauthor:: Alex Alsina <alex.alsina@sikkurat.es>
+
+
+"""
 import asyncore
 import socket
 import sys
+import threading
+from conf import settings
 from conf import settings
 from dispatchers.cashlogy.dispatcher import Cashlogy
 from dispatchers.dispatcher import Dispatcher
 from handlers.echo.handler import Echo
 
 
-class PrinterServer(Dispatcher):
+class PrinterServer(Dispatcher, object):
     """
     Receives connections and establishes handlers for each client.
     """
@@ -85,3 +96,16 @@ class PrinterServer(Dispatcher):
         cashlogy_sock.send("#I,0#")
         data = cashlogy_sock.recv(128)
         self.logger.info('Cashlogy response %s', data)
+
+
+def run(argv=None):
+    """
+    This method is the entry point of the ticket reader.
+    Creates a new instance of a `PrinterServer` and starts it.
+
+    :param argv: Any list of parameters from the command line.
+
+    """
+    address = (settings.win32['inaddr'], int(settings.win32['inport']))
+    server = PrinterServer(address, settings.win32['outprinter'])
+    server.run()
