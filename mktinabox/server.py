@@ -8,14 +8,16 @@
 
 """
 import asyncore
+import logging
+import os
 import socket
 import sys
 import threading
-from conf import settings
-from conf import settings
-from dispatchers.cashlogy.dispatcher import Cashlogy
-from dispatchers.dispatcher import Dispatcher
-from handlers.echo.handler import Echo
+
+from mktinabox.conf import settings, BASE_DIR
+from mktinabox.dispatchers import Dispatcher
+from mktinabox.dispatchers.cashlogy.api import CashlogyAPI
+from mktinabox.dispatchers.cashlogy.dispatcher import Cashlogy
 
 
 class PrinterServer(Dispatcher, object):
@@ -30,8 +32,9 @@ class PrinterServer(Dispatcher, object):
         if sys.platform == 'win32':
             from printer.win32 import Printer
             self.printer = Printer(printer_name)
-            # init_cashlogy = threading.Thread(target=self.init_cashlogy, args=())
-            # init_cashlogy.start()
+            init_cashlogy = threading.Thread(target=CashlogyAPI.initialize,
+                                             args=(settings.cashlogy['hostname'], int(settings.cashlogy['port'])))
+            init_cashlogy.start()
         else:
             self.printer = None
 
@@ -42,15 +45,17 @@ class PrinterServer(Dispatcher, object):
         self.logger.debug('binding to %s', self.address)
         self.listen(PrinterServer.BACKLOG)
 
-        # Initializing handlers
-        handler = Echo(properties=settings.echo)
-        self.logger.info('Echo handler created')
-
-    def run(self):
-        asyncore.loop()
-
-    def writable(self):
-        return False
+    def run(self, timeout=30.0, use_poll=False, map=None, count=None):
+        """
+        Enter a polling loop that terminates after count passes or all open channels have been closed. All arguments
+        are optional. The count parameter defaults to None, resulting in the loop terminating only when all channels
+        have been closed. The timeout argument sets the timeout parameter for the appropriate select() or poll()
+        call, measured in seconds; the default is 30 seconds. The use_poll parameter, if true, indicates that poll()
+        should be used in preference to select() (the default is False). The map parameter is a dictionary whose
+        items are the channels to watch. As channels are closed they are deleted from their map. If map is omitted,
+        a global map is used. Channels are instances of asyncore.dispatcher
+        """
+        asyncore.loop(timeout=timeout, use_poll=use_poll, map=map, count=None)
 
     def readable(self):
         return self.accepting
@@ -60,11 +65,6 @@ class PrinterServer(Dispatcher, object):
 
     def handle_connect(self):
         pass
-
-    def handle_close(self):
-        self.logger.debug('handle_close()')
-        self.close()
-        return
 
     def handle_accept(self):
         """
@@ -106,6 +106,18 @@ def run(argv=None):
     :param argv: Any list of parameters from the command line.
 
     """
+    # Initialize log directory
+    log_path = settings.log['path']
+    log_filename = settings.log['name']
+    directory = os.path.join(BASE_DIR, log_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    filename = os.path.join(directory, log_filename)
+
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s', filename=filename)
+    logger = logging.getLogger(__name__)
+    logger.info("Current application path: %s", BASE_DIR)
+
     address = (settings.win32['inaddr'], int(settings.win32['inport']))
     server = PrinterServer(address, settings.win32['outprinter'])
     server.run()

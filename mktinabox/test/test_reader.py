@@ -1,3 +1,3 @@
 import pytest
-from reader.reader import PrinterServer
+from mktinabox.server import PrinterServer
 

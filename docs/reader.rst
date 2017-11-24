@@ -1,6 +1,15 @@
 reader package
 ==============
 
+Module contents
+---------------
+
+.. automodule:: reader
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 Subpackages
 -----------
 
@@ -17,19 +26,4 @@ Subpackages
 Submodules
 ----------
 
-reader\.reader module
----------------------
 
-.. automodule:: reader.reader
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: reader
-    :members:
-    :undoc-members:
-    :show-inheritance:

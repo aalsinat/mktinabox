@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # reader documentation build configuration file, created by
-# sphinx-quickstart on Wed Nov 22 00:18:52 2017.
+# sphinx-quickstart on Wed Nov 22 12:59:59 2017.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -18,7 +18,7 @@
 #
 import os
 import sys
-sys.path.insert(0, u'/Users/aalsinat/Development/source/mktinabox/git/reader')
+sys.path.insert(0, u'C:\\Users\\alexa\\Development\\source\\mktinabox\\mktinabox')
 
 
 # -- General configuration ------------------------------------------------
@@ -47,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'reader'
+project = u'mktinabox'
 copyright = u'2017, Author'
 author = u'Author'
 
@@ -140,7 +140,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'reader.tex', u'reader Documentation',
+    (master_doc, 'mktinabox.tex', u'mktinabox Documentation',
      u'Author', 'manual'),
 ]
 
@@ -150,7 +150,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'reader', u'reader Documentation',
+    (master_doc, 'mktinabox', u'mktinabox Documentation',
      [author], 1)
 ]
 
@@ -161,8 +161,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'reader', u'reader Documentation',
-     author, 'reader', 'One line description of project.',
+    (master_doc, 'mktinabox', u'mktinabox Documentation',
+     author, 'mktinabox', 'One line description of project.',
      'Miscellaneous'),
 ]
 

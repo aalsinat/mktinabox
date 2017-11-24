@@ -1,14 +1,15 @@
 import os
 import re
-import socket
+from datetime import datetime
 
 from escpos.printer import Dummy
 from textx.exceptions import TextXError
 
 from mktinabox.conf import settings, BASE_DIR
-from mktinabox.dispatchers import Dispatcher
 from mktinabox.grammar.grammar import Grammar
-from mktinabox.handlers import constants
+from mktinabox.printer import constants
+from .api import CashlogyAPI, CashlogyResponse
+from .. import Dispatcher
 
 
 class Cashlogy(Dispatcher, object):
@@ -22,6 +23,7 @@ class Cashlogy(Dispatcher, object):
         self.data_to_write = None
         self.printer = printer
         self.dummy = Dummy()
+        self.print_ticket = True
         return
 
     def handle_read(self):
@@ -33,15 +35,18 @@ class Cashlogy(Dispatcher, object):
             self.data_to_write = bytearray()
             self.data_to_write.extend(data)
             try:
+                self.log_ticket(self.data_to_write)
                 self.parse_ticket(self.remove_esc_pos(self.data_to_write))
             except TextXError as e:
                 self.logger.error('Error parsing ticket: %s -> (line: %s, col: %s)', e.message, e.line, e.col)
-                self.printer.DirectPrint(printer_name, self.data_to_write)
+                if self.print_ticket:
+                    self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
             else:
-                self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
-                self.data_to_write.extend(self.dummy.output)
-                self.printer.DirectPrint(printer_name, self.data_to_write)
+                if self.print_ticket:
+                    self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
+                    self.data_to_write.extend(self.dummy.output)
+                    self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
 
     def remove_end_of_ticket(self, ticket):
@@ -72,56 +77,79 @@ class Cashlogy(Dispatcher, object):
     def _hasattr(self, model, attribute):
         return attribute in [attr for attr in dir(model) if not attr.startswith('__')]
 
+    def log_ticket(self, ticket):
+        if eval(settings.log['tickets']):
+            tickets_path = settings.log['path']
+            directory = os.path.join(BASE_DIR, tickets_path)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            filename = datetime.now().strftime('%Y%m%d-%H%M%S') + '.txt'
+            file_path = os.path.normpath(os.path.join(directory, filename))
+            f = open(file_path, 'w+')
+            f.write(ticket)
+
     def parse_ticket(self, ticket):
         parse_mode = eval(settings.grammar['debug'])
         filename = os.path.normpath(os.path.join(BASE_DIR, settings.grammar['path'], settings.grammar['name']))
-        grammar = Grammar.from_file(filename)
-        ticket_lines = filter(lambda line: len(line.strip()) > 0, re.split(r'[\r\n]+', ticket.decode('Cp1252')))
-        ticket_ast = filter(lambda model: model is not None,
-                            [grammar.parse_from_string(line, parse_mode) for line in ticket_lines])
-        # ticket_ast = filter(lambda model: model is not None, map(grammar.parse_from_string, ticket_lines))
-        self.logger.info('Instantiated models %d', len(ticket_ast))
+        if os.path.isfile(filename):
+            grammar = Grammar.from_file(filename)
+            ticket_lines = filter(lambda line: len(line.strip()) > 0, re.split(r'[\r\n]+', ticket.decode('Cp1252')))
+            ticket_ast = filter(lambda model: model is not None,
+                                [grammar.parse_from_string(line, parse_mode) for line in ticket_lines])
+            # ticket_ast = filter(lambda model: model is not None, map(grammar.parse_from_string, ticket_lines))
 
-        ticket_id = None
-        cash_code = 'Cash1'
-        username = 'Username'
-        amount = None
-        payment_method = None
-        for model in ticket_ast:
-            if self._hasattr(model, 'id'):
-                ticket_id = model.id
-            elif self._hasattr(model, 'user'):
-                username = model.user
-            elif self._hasattr(model, 'amount'):
-                amount = model.amount
-            elif self._hasattr(model, 'cashcode'):
-                cash_code = model.cashcode
-            elif self._hasattr(model, 'method'):
-                payment_method = model.method
+            receipt_id = None
+            till_ref = 'CashReference'
+            cashier_name = 'CashierName'
+            total_amount = None
+            mean = None
+            self.logger.info('----------------------')
+            self.logger.info('Parsing ticket results')
+            self.logger.info('----------------------')
+            self.logger.info('Retrieved %d value(s) from ticket', len(ticket_ast))
+            for model in ticket_ast:
+                if self._hasattr(model, 'receipt_id'):
+                    receipt_id = model.receipt_id
+                    self.logger.info('Receipt identifier: %s', receipt_id)
+                elif self._hasattr(model, 'cashier'):
+                    cashier_name = model.cashier
+                    self.logger.info('Cashier name: %s', cashier_name)
+                elif self._hasattr(model, 'total_amount'):
+                    total_amount = model.total_amount
+                    self.logger.info('Total amount to be sent: %s', total_amount)
+                elif self._hasattr(model, 'till_ref'):
+                    till_ref = model.till_ref
+                    self.logger.info('Till ref: %s', till_ref)
+                elif self._hasattr(model, 'mean'):
+                    mean = model.mean
+                    self.logger.info('Mean of payment: %s', mean)
+            self.logger.info('----------------------')
 
-        if payment_method is not None:
-            self.sync_with_cashlogy(ticket_id, amount, user=username, cash_code=cash_code)
-
-    def sync_with_cashlogy(self, ticket_id, amount, cash_code='Cash1', user='Username'):
-        self.logger.info('sync_with_cashlogy() -> <type: Efectivo | amount: %s>', amount)
-        response = self.send_azkoyen_command(ticket_id, amount, cash_code=cash_code, user=user)
-        accounting = response.split('#')
-        if len(accounting) == 8:
-            given_amount = '{:03.2f}'.format(round(float(accounting[5]) / 100, 2))
-            exchange_amount = '{:03.2f}'.format(round(float(accounting[4]) / 100, 2))
-            self.detail_obj_processor(given_amount, exchange_amount)
-
-    # def means_of_payment_obj_processor(self, means_of_payment):
-    #     self.logger.debug('means_of_payment_processor() -> <type: %s | amount: %s>',
-    #                       means_of_payment.type,
-    #                       means_of_payment.amount)
-    #     # Response exemple: #WR:LEVEL,22#F001/66776#0#300#500#0#
-    #     response = self.send_azkoyen_command(means_of_payment.amount)
-    #     accounting = response.split('#')
-    #     if len(accounting) == 8:
-    #         given_amount = '{:03.2f}'.format(round(float(accounting[5])/100, 2))
-    #         exchange_amount = '{:03.2f}'.format(round(float(accounting[4])/100, 2))
-    #         self.detail_obj_processor(given_amount, exchange_amount)
+            if mean is not None:
+                response = CashlogyResponse.from_string(CashlogyAPI.command_actions.PAYMENT,
+                                                        CashlogyAPI.send_command(settings.cashlogy['hostname'],
+                                                                                 int(settings.cashlogy['port']),
+                                                                                 CashlogyAPI.create_command(
+                                                                                     [('action',
+                                                                                       CashlogyAPI.command_actions.PAYMENT),
+                                                                                      ('receipt_ref', receipt_id),
+                                                                                      ('till_ref', till_ref),
+                                                                                      ('cashier_name', cashier_name),
+                                                                                      ('total_amount',
+                                                                                       total_amount.replace(',', ''))])))
+                self.print_ticket = bool(int(response.params['print_ticket']))
+                if self.print_ticket:
+                    self.logger.info('*** Cashlogy sets that receipt MUST be printed ***')
+                else:
+                    self.logger.info('*** Cashlogy sets that receipt MUST NOT be printed ***')
+                if response.status == CashlogyAPI.response_status.OK or response.status == CashlogyAPI.response_status.WARNING:
+                    automatic_cashed = round(float(response.params['automatic_cashed']) / 100, 2)
+                    manual_cashed = round(float(response.params['manual_cashed']) / 100, 2)
+                    given = '{:03.2f}'.format(automatic_cashed + manual_cashed)
+                    exchange = '{:03.2f}'.format(round(float(response.params['exchange']) / 100, 2))
+                    self.detail_obj_processor(given, exchange)
+        else:
+            self.logger.error('########## Grammar file %s doesn\'t exists #############', filename)
 
     def detail_obj_processor(self, given, exchange):
         self.dummy.control('LF')
@@ -137,19 +165,3 @@ class Cashlogy(Dispatcher, object):
         self.dummy.set(text_type='B')
         self.dummy.text(exchange)
         self.dummy.cut()
-
-    def send_azkoyen_command(self, ticket_id, amount, cash_code='Cash', user='Username'):
-        # Init Cashlogy connection
-        self.logger.info('Connect Cashlogy')
-        hostname = settings.cashlogy['hostname']
-        port = int(settings.cashlogy['port'])
-        cashlogy_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        cashlogy_sock.connect((hostname, port))
-        params = '#'.join([str(ticket_id), cash_code, user, amount.replace(',', '')])
-        command = '#C,%d#%s#' % (len(params), params)
-        self.logger.info('send_azkoyen_command() -> %s', command)
-        # Send command
-        cashlogy_sock.send(command)
-        data = cashlogy_sock.recv(128)
-        self.logger.info('send_azkoyen_command() -> Cashlogy response: %s', data)
-        return data

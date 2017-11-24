@@ -1,6 +1,6 @@
 import logging
-from reader.handlers.handler import Handler
-from reader.dispatchers.dispatcher import Dispatcher
+from mktinabox.handlers.handler import Handler
+from mktinabox.dispatchers import Dispatcher
 
 
 class Echo(Handler):
