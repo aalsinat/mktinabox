@@ -30,20 +30,22 @@ class Cashlogy(Dispatcher, object):
         """Read an incoming message from the client and put it into our outgoing queue."""
         data = self.recv(self.chunk_size)
         printer_name = settings.win32['outprinter']
+        parse_ticket =  eval(settings.grammar['parse'])
         self.logger.debug('handle_read() -> (%d) "%s"', len(data), data)
         if len(data) > 10:
             self.data_to_write = bytearray()
             self.data_to_write.extend(data)
             try:
                 self.log_ticket(self.data_to_write)
-                self.parse_ticket(self.remove_esc_pos(self.data_to_write))
+                if parse_ticket:
+                    self.parse_ticket(self.remove_esc_pos(self.data_to_write))
             except TextXError as e:
                 self.logger.error('Error parsing ticket: %s -> (line: %s, col: %s)', e.message, e.line, e.col)
                 if self.print_ticket:
                     self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
             else:
-                if self.print_ticket:
+                if self.print_ticket and parse_ticket:
                     self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
                     self.data_to_write.extend(self.dummy.output)
                     self.printer.DirectPrint(printer_name, self.data_to_write)
@@ -106,23 +108,30 @@ class Cashlogy(Dispatcher, object):
             self.logger.info('----------------------')
             self.logger.info('Parsing ticket results')
             self.logger.info('----------------------')
-            self.logger.info('Retrieved %d value(s) from ticket', len(ticket_ast))
+            i = 0
             for model in ticket_ast:
                 if self._hasattr(model, 'receipt_id'):
                     receipt_id = model.receipt_id
+                    i += 1
                     self.logger.info('Receipt identifier: %s', receipt_id)
-                elif self._hasattr(model, 'cashier'):
+                if self._hasattr(model, 'cashier'):
                     cashier_name = model.cashier
+                    i += 1
                     self.logger.info('Cashier name: %s', cashier_name)
-                elif self._hasattr(model, 'total_amount'):
+                if self._hasattr(model, 'total_amount'):
                     total_amount = model.total_amount
+                    i += 1
                     self.logger.info('Total amount to be sent: %s', total_amount)
-                elif self._hasattr(model, 'till_ref'):
+                if self._hasattr(model, 'till_ref'):
                     till_ref = model.till_ref
+                    i += 1
                     self.logger.info('Till ref: %s', till_ref)
-                elif self._hasattr(model, 'mean'):
+                if self._hasattr(model, 'mean'):
                     mean = model.mean
+                    i += 1
                     self.logger.info('Mean of payment: %s', mean)
+
+            self.logger.info('Retrieved %d value(s) from ticket', i)
             self.logger.info('----------------------')
 
             if mean is not None:
