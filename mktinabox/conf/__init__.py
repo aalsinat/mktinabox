@@ -7,8 +7,8 @@ from mktinabox.utils.functional import LazyObject, empty
 
 
 ENVIRONMENT_SETTINGS = "READER_SETTINGS"
-# BASE_DIR = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(sys.argv[0]))
-BASE_DIR = os.path.dirname(sys.executable)
+BASE_DIR = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(sys.argv[0]))
+# BASE_DIR = os.path.dirname(sys.executable)
 
 
 class LazySettings(LazyObject):

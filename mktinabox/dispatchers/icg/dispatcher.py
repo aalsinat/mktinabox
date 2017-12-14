@@ -1,65 +1,53 @@
-import asyncore
-import logging
-import socket
 import re
 import os
-from textx.metamodel import metamodel_from_file
+from datetime import datetime
+
 from textx.exceptions import TextXError
-import mktinabox.printer.win32
-import time
-import datetime
 from escpos.printer import Dummy
 
+from mktinabox.conf import settings, BASE_DIR
+from mktinabox.grammar.grammar import Grammar
+from mktinabox.printer import constants
+from .. import Dispatcher
 
-class ICG(asyncore.dispatcher):
+
+class ICG(Dispatcher, object):
     """
     Handles echoing messages from a single client.
     """
 
-    def __init__(self, sock, chunk_size=8192):
+    def __init__(self, printer, sock=None, chunk_size=8192):
+        super(ICG, self).__init__(sock=sock)
         self.chunk_size = chunk_size
-        self.logger = logging.getLogger('ICGHandler%s' % str(sock.getsockname()))
-        asyncore.dispatcher.__init__(self, sock=sock)
         self.data_to_write = None
-        self.printer = mktinabox.printer.win32.Printer()
+        self.printer = printer
         self.logger.debug('Dummy printer init')
         self.dummy = Dummy()
         return
 
-    def writable(self):
-        """We want to write if we have received data."""
-        response = bool(self.data_to_write)
-        self.logger.debug('writable() -> %s', response)
-        return False
-
-    def handle_write(self):
-        """Write as much as possible of the most recent message we have received."""
-        self.logger.debug('handle_write() -> %s', self.data_to_write)
-        if not self.writable():
-            self.handle_close()
-
     def handle_read(self):
         """Read an incoming message from the client and put it into our outgoing queue."""
         data = self.recv(self.chunk_size)
+        printer_name = settings.win32['outprinter']
+        parse_ticket = eval(settings.grammar['parse'])
         self.logger.debug('handle_read() -> (%d) "%s"', len(data), data)
-        if (len(data) > 10):
+        # Should this condition be changed to detect special escape chains
+        if len(data) > 10:
             self.data_to_write = bytearray()
             self.data_to_write.extend(data)
             try:
-                self.parse_ticket(self.remove_esc_pos(self.data_to_write))
+                self.log_ticket(self.data_to_write)
+                if parse_ticket:
+                    self.parse_ticket(self.remove_esc_pos(self.data_to_write))
             except TextXError as e:
                 self.logger.error('Error parsing ticket: %s -> (line: %s, col: %s)', e.message, e.line, e.col)
-                self.printer.DirectPrint('TIQUETSMKT', self.data_to_write)
+                self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
             else:
                 self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
                 self.data_to_write.extend(self.dummy.output)
-                self.printer.DirectPrint('TIQUETSMKT', self.data_to_write)
+                self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
-
-    def handle_close(self):
-        self.logger.debug('handle_close()')
-        self.close()
 
     # Handler support methods
 
@@ -68,29 +56,57 @@ class ICG(asyncore.dispatcher):
         return out
 
     def remove_esc_pos(self, ticket):
-        # Delete ESC @ - Initialize printer
-        out = re.sub(r"(\x1B\x40)", '', ticket)
-        # Delete GS V - Select cut mode and cut paper
-        out = re.sub(r"(\x1d\x56\x41).*$", '', out)
-        # Delete ESC ! - Select print mode
-        out = re.sub(r"(\x1B\x21).", '', out)
-        # Delete CAN and ESC
-        out = re.sub(r"(\x18|\x1B)", '', out)
-        # Delete LF - Print and line feed
-        # out = re.sub(r"(\x0A)", '', out)
-        self.logger.debug('remove_esc_pos() -> %s', out)
+        # ESC @ - Initialize printer
+        init_printer = constants.HW_INIT
+        # ESC ! - Select print mode
+        select_mode = constants.SET_MODE('.')
+        # GS V - Select cut mode and cut paper
+        cut_mode = constants.CUT_PAPER('.')
+        # ESC E - Text bold
+        text_style = '|'.join([constants.TXT_STYLE['bold'][True], constants.TXT_STYLE['bold'][False]])
+        # GS ! - Text size
+        text_size = constants.SET_SIZE('.')
+        # ESC control character
+        # esc_char = constants.ESC
+        # CAN control character
+        # can_char = constants.CAN
+        # Regular expression for cleaning ESC/POS characters
+        clean_expression = '|'.join([init_printer, select_mode, cut_mode, text_style, text_size])
+        out = re.sub(clean_expression, '', ticket)
+        # print 'remove_esc_pos() -> %s' % out
         return out
 
+    def _hasattr(self, model, attribute):
+        return attribute in [attr for attr in dir(model) if not attr.startswith('__')]
+
+    def log_ticket(self, ticket):
+        if eval(settings.log['tickets']):
+            tickets_path = settings.log['path']
+            directory = os.path.join(BASE_DIR, tickets_path)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            filename = datetime.now().strftime('%Y%m%d-%H%M%S') + '.txt'
+            file_path = os.path.normpath(os.path.join(directory, filename))
+            f = open(file_path, 'w+')
+            f.write(ticket)
+
     def parse_ticket(self, ticket):
-        fileDir = r'c:\\temp'
-        # fileDir = os.path.dirname(os.path.relpath('__file__'))
-        filename = os.path.join(fileDir, 'icg.tx')
-        meta_model = metamodel_from_file(filename, debug=False)
-        obj_processor = {
-            'Detail': self.detail_obj_processor
-        }
-        meta_model.register_obj_processors(obj_processor)
-        model = meta_model.model_from_str(ticket.decode('Cp1252'), False)
+        parse_mode = eval(settings.grammar['debug'])
+        filename = os.path.normpath(os.path.join(BASE_DIR, settings.grammar['path'], settings.grammar['name']))
+        if os.path.isfile(filename):
+            grammar = Grammar.from_file(filename)
+            obj_processor = {
+                'CompanyInfo': self.validate_rule_matching
+            }
+            grammar.register_obj_processor(obj_processor)
+            ticket_ast = grammar.parse_from_string(ticket.decode('utf-8').encode('ascii', 'ignore'), parse_mode)
+            self.logger.info('Ticket parsed successfully')
+        else:
+            self.logger.error('########## Grammar file %s doesn\'t exists #############', filename)
+
+    def validate_rule_matching(self, model):
+        self.logger.info('Parsed value for CompanyInfo')
+        pass
 
     def detail_obj_processor(self, detail):
         self.dummy.control("CR")
@@ -121,15 +137,3 @@ class ICG(asyncore.dispatcher):
         self.dummy.control("CR")
         self.dummy.control("LF")
         self.dummy.cut()
-
-    def send_azkoyen_command(self, amount):
-        # Init Cashlogy connection
-        self.logger.debug('Connect Cashlogy')
-        cashlogy_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        cashlogy_sock.connect(('127.0.0.1', 8094))
-        command = '#C,22#F001/66776#175#175#%s#' % amount.replace(',', '')
-        self.logger.debug('send_azkoyen_command() -> %s', command)
-        # Send command
-        cashlogy_sock.send(command)
-        data = cashlogy_sock.recv(128)
-        self.logger.debug('send_azkoyen_command() -> Cashlogy response: %s', data)

@@ -30,7 +30,7 @@ class Cashlogy(Dispatcher, object):
         """Read an incoming message from the client and put it into our outgoing queue."""
         data = self.recv(self.chunk_size)
         printer_name = settings.win32['outprinter']
-        parse_ticket =  eval(settings.grammar['parse'])
+        parse_ticket = eval(settings.grammar['parse'])
         self.logger.debug('handle_read() -> (%d) "%s"', len(data), data)
         if len(data) > 10:
             self.data_to_write = bytearray()
@@ -45,9 +45,10 @@ class Cashlogy(Dispatcher, object):
                     self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
             else:
-                if self.print_ticket and parse_ticket:
-                    self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
-                    self.data_to_write.extend(self.dummy.output)
+                if self.print_ticket:
+                    if parse_ticket:
+                        self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
+                        self.data_to_write.extend(self.dummy.output)
                     self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
 

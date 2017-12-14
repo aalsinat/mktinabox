@@ -1,0 +1,69 @@
+// Line definition for ticket
+ticket:
+  Identifier | MeansOfPayment
+;
+
+// Line definition for Identifier
+Identifier:
+  	'FRA SIMP:'
+	receipt_id = ReceiptId
+ 	Skip
+;
+
+
+// Line definition for MeansOfPayment
+MeansOfPayment:
+  	mean = 'EFECTIVO'
+	total_amount = Number
+ 	Skip
+;
+
+
+/*
+	Component types
+*/
+
+ReceiptId:
+    /[a-zA-Z0-9-@\/\.\#]+/
+;
+
+Date:
+    /\d{1,4}\W?\d{1,4}\W?\d{1,4}/
+;
+
+Time:
+    /\d{1,2}\W?\d{1,2}(\W?\d{1,2})?(\s)?(am|pm|AM|PM)?/
+;
+
+Number:
+    /-?(\d{1,3}([\,\.]?\d{3})*|(\d+))([\.\,]\d{2})?/
+;
+
+Currency:
+    /([A-Z]{1,3}|\$|\€)?\s?\-?(\d{1,3}([\,\.]\d{3})+|(\d+))([\.\,]\d{1,2})?\s?([A-Z]{1,3}|\$|\€)?/
+;
+
+TillRef:
+    /[a-zA-Z0-9]+([\W]?[a-zA-Z0-9]+){1,2}/
+;
+
+Cashier:
+    /[a-zA-Z]{2,}\s?[a-zA-z0-9]{1,}\'?\-?\.?\s?([a-zA-Z]{2,})?\s?([a-zA-Z]{1,})?/
+;
+
+Percentage:
+    /\-?\s?\%?\s?\d{1,3}([.\,]?\d{1,2})?\s?\%?/
+;
+
+Means:
+	/[a-zA-Z]{2,}\s?[a-zA-z0-9]{1,}\'?\-?\.?\s?([a-zA-Z]{2,})?\s?([a-zA-Z]{1,})?/
+;
+
+SeparatorLine:
+	/[-=\*\.]*/
+;
+
+Skip:
+    /.*$/
+;
+

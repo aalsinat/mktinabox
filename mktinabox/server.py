@@ -12,12 +12,10 @@ import logging
 import os
 import socket
 import sys
-import threading
 
 from mktinabox.conf import settings, BASE_DIR
 from mktinabox.dispatchers import Dispatcher
-from mktinabox.dispatchers.cashlogy.api import CashlogyAPI
-from mktinabox.dispatchers.cashlogy.dispatcher import Cashlogy
+from mktinabox.dispatchers.icg.dispatcher import ICG
 
 
 class PrinterServer(Dispatcher, object):
@@ -32,9 +30,6 @@ class PrinterServer(Dispatcher, object):
         if sys.platform == 'win32':
             from printer.win32 import Printer
             self.printer = Printer(printer_name)
-            init_cashlogy = threading.Thread(target=CashlogyAPI.initialize,
-                                             args=(settings.cashlogy['hostname'], int(settings.cashlogy['port'])))
-            init_cashlogy.start()
         else:
             self.printer = None
 
@@ -74,9 +69,9 @@ class PrinterServer(Dispatcher, object):
         # Called when a client connects to our socket
         client_info = self.accept()
         self.logger.debug('handle_accept() -> %s', client_info[1])
-        Cashlogy(sock=client_info[0], printer=self.printer)
+        #Cashlogy(sock=client_info[0], printer=self.printer)
         # EchoHandler(sock=client_info[0], printer=self.printer)
-        # ICG(sock=client_info[0])
+        ICG(sock=client_info[0], printer=self.printer)
         # We only want to deal with one client at a time,
         # so close as soon as we set up the handler.
         # Normally you would not do this and the server

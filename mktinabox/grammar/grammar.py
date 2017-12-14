@@ -44,7 +44,8 @@ class Grammar(object):
         proper python reference. Each object is an instance of a class from the meta-model. Classes are created on
         the fly from the grammar rules.
         """
-        self.logger.setLevel(logging.CRITICAL)
+        if not debug:
+            self.logger.setLevel(logging.CRITICAL)
         try:
             return self._mm.model_from_str(input_string, debug=debug)
         except TextXError as e:
@@ -59,10 +60,18 @@ class Grammar(object):
         proper python reference. Each object is an instance of a class from the meta-model. Classes are created on
         the fly from the grammar rules.
         """
-        self.logger.setLevel(logging.CRITICAL)
+        if not debug:
+            self.logger.setLevel(logging.CRITICAL)
         try:
             return self._mm.model_from_file(input_file, encoding='utf-8', debug=debug)
         except TextXError as e:
             self.logger.error('Error creating model from file: %s -> (line: %s, col: %s)', e.message, e.line, e.col)
         finally:
             self.logger.setLevel(logging.INFO)
+
+    def register_obj_processor(self, processor):
+        self._mm.register_obj_processors(processor)
+
+    def register_model_processor(self, processor):
+        self._mm.register_obj_processors(
+        )
