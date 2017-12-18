@@ -4,52 +4,38 @@
  */
 
 
-Ticket:
-    header = Header
-	detail = Detail
+Receipt:
+    header = ReceiptHeader
+	detail = ReceiptDetail
+	taxes = ReceiptTaxes
+	means = ReceiptMeans
 	footer = Footer
 	Skip
 ;
 
-Header:
+/* ===================== HEADER ===================== */
+
+ReceiptHeader:
     company_info = CompanyInfo
-    'Factura'
-    'Simplificada'
+    document_name = /.{40}/
+    document_type = /.{40}/
     receipt_info = ReceiptInfo
 ;
 
-Detail:
-    Skip
-    SeparatorLineRegEx
-    receipt_items += ReceiptItem
-    SeparatorLineRegEx
-    discounts *= Discount
-    total_without_tax = TotalWithoutTax
-    taxes += Tax
-    total = TotalWithTax
-    payment = Payment
-;
-
-Footer:
-    refund = Refund?
-    Skip
-    signature = CheckSignature?
-    Skip
-;
-
-/* -------------------------------
-    Information about the company
-   -------------------------------
- */
 CompanyInfo:
-    name = CompanyName
+    commercial_name = /.{20}/
+    name = /.{14}/
+    market = /.{31}
+    activity = /.{40}/
+    brand = /.{20}/
+    phone_number = CompanyPhoneNumber
+    fiscal_data = FiscalData
     commercial_registry = CommercialRegistry
     address = CompanyAddress
-    phone_number = CompanyPhoneNumber
 ;
 
 CompanyName:
-    value = Skip
+    value = /.{1,20}/
 ;
 
 CommercialRegistry:
@@ -57,30 +43,35 @@ CommercialRegistry:
 ;
 
 CompanyAddress:
-    'Sede:' town = Skip
-    address = Skip
+    'Sede:' address = /.{20}/
+    zip_code = /.{8}/
+    city = /.{6}/
+;
+
+FiscalData:
+    'NIF:' tax_id = Skip
+    'Cap. Social:' share_capital = CurrencyRegEx
 ;
 
 CompanyPhoneNumber:
     'Tel.:' number = NumberRegEx
 ;
 
-/* ----------------------------------
-    Information about receipt header
-   ----------------------------------
- */
-
 ReceiptInfo:
     receipt_id = ReceiptId
     cashier_ref = CashierRef
+    Skip
+    commercial_name = /.{40}/
     receipt_date = ReceiptDate
+    Skip
+    SeparatorLineRegEx
 ;
 
 ReceiptId:
     'Doc. Num.:'
-    header_serial_number = /\w{1,4}/ '/'
-    manager_serial_number = /\w{1,3}/ '/'
-    document_number = /\w{1,8}/
+    header_serial_number = /\w{4}/ '/'
+    manager_serial_number = /\w{3}/ '/'
+    document_number = /\w{8}/
 ;
 
 CashierRef:
@@ -95,31 +86,45 @@ ReceiptDate:
     'ORIGINAL' | Skip
 ;
 
-/* ---------------------------------
-    Information about receipt items
-   ---------------------------------
- */
-ReceiptItem:
-   quantity = NumberRegEx
-   description = ItemDescriptionRegEx
-   tax = PercentageRegEx
-   unit_price = NumberRegEx
-   item_discount = Discount?
+/* ===================== DETAIL ===================== */
+
+ReceiptDetail:
+    receipt_items += ReceiptItem
+    SeparatorLineRegEx
+    discounts *= Discount
 ;
 
-Discount:
-    'DTO'
+ReceiptItem:
+   quantity = NumberRegEx
+   description = /.{18}/
+   tax = PercentageRegEx
+   unit_price = NumberRegEx
+   line_discount = LineDiscount?
+;
+
+LineDiscount:
+    '- Desconto:'
     percentage = PercentageRegEx
     amount = NumberRegEx
 ;
 
-TotalWithoutTax:
-    'Incidencia'
+Discount:
+    'ID Desconto:'
+    discount_id = /.{8}/
+    'DTO'
     amount = NumberRegEx
 ;
 
+/* ===================== TAXES ===================== */
+
+ReceiptTaxes:
+    taxes_header = Skip
+    taxes += Tax
+    total = TotalWithTax
+;
+
 Tax:
-    'Imposto'
+    tax_base = NumberRegEx
     percentage = PercentageRegEx
     amount = NumberRegEx
 ;
@@ -128,44 +133,63 @@ TotalWithTax:
     'TOTAL'
     amount = NumberRegEx
 ;
+/* ===================== MEANS ===================== */
+
+ReceiptMeans:
+    payment = Payment
+;
 
 Payment:
-    'Entregue' 'Troco'
     means += MeansOfPayment
-    'CLIENTE' customer = Skip
-    'NIF:' Skip
-    Skip
-    Skip
+    'Troco:' exchange = NumberRegEx
 ;
 
 MeansOfPayment:
-    description = /(\w+\s?)+/
+    description = /.{27}/
     given_amount = NumberRegEx
-    exchange = NumberRegEx
 ;
 
-/* --------------------------
-    Information about footer
-   --------------------------
- */
+/* ===================== FOOTER ===================== */
+
+Footer:
+    Skip
+    Skip
+    customer_info = CustomerInfo
+    refund = Refund | Skip
+    signature = CheckSignature
+    Skip
+    Skip
+    Skip
+;
+
+CustomerInfo:
+    'Nome:' name = /.{34}/
+    'NIF:' tax_id = /.{12}/
+    address = CustomerAddress | Skip
+    Skip
+    city = CustomerCity | Skip
+;
+
+CustomerAddress:
+    'Mor.:' value = /.{34}/
+;
+
+CustomerCity:
+    'C.POS:' value = /.{25}/
+;
+
 Refund:
-    'Credito ref. Fatura:'
+    'Credito ref. factura:'
     refund_serial_number = /\w{1,4}/ '/'
     manager_serial_number = /\w{1,3}/ '/'
     document_number = /\w{1,8}/
 ;
 
 CheckSignature:
-    value = Skip
+    value = /.{6}/ Skip
 ;
 
-/* ---------------
-    Support types
-   --------------- */
-
-ItemDescriptionRegEx:
-    /([\w\'\-\.\,\/ ]+\s{1,2})+/
-;
+/* ************** Support types **************** */
 
 ReceiptIdRegEx:
     /[a-zA-Z0-9-@\/\.\#]+/
@@ -183,7 +207,7 @@ NumberRegEx:
     /-?(\d{1,3}([\,\.]?\d{3})*|(\d+))([\.\,]\d{2})?/
 ;
 
-Currency:
+CurrencyRegEx:
     /([A-Z]{1,3}|\$|\€)?\s?\-?(\d{1,3}([\,\.]\d{3})+|(\d+))([\.\,]\d{1,2})?\s?([A-Z]{1,3}|\$|\€)?/
 ;
 

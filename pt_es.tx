@@ -1,0 +1,212 @@
+
+/*
+ Ticket DSL grammar for portuguese ICG tickets without design.
+ */
+
+
+Ticket:
+    header = Header
+	detail = Detail
+	footer = Footer
+	Skip
+;
+
+Header:
+    company_info = CompanyInfo
+    'Factura'
+    'Simplificada'
+    receipt_info = ReceiptInfo
+;
+
+Detail:
+    Skip
+    SeparatorLineRegEx
+    receipt_items += ReceiptItem
+    SeparatorLineRegEx
+    discounts *= Discount
+    total_without_tax = TotalWithoutTax
+    taxes += Tax
+    total = TotalWithTax
+    payment = Payment
+;
+
+Footer:
+    refund = Refund?
+    Skip
+    signature = CheckSignature?
+    Skip
+;
+
+/* -------------------------------
+    Information about the company
+   -------------------------------
+ */
+CompanyInfo:
+    name = CompanyName
+    commercial_registry = CommercialRegistry
+    address = CompanyAddress
+    phone_number = CompanyPhoneNumber
+;
+
+CompanyName:
+    value = Skip
+;
+
+CommercialRegistry:
+    'Cons. Reg. Com. Cascais n.' number = NumberRegEx
+;
+
+CompanyAddress:
+    'Sede:' town = Skip
+    address = Skip
+;
+
+CompanyPhoneNumber:
+    'Tel.:' number = NumberRegEx
+;
+
+/* ----------------------------------
+    Information about receipt header
+   ----------------------------------
+ */
+
+ReceiptInfo:
+    receipt_id = ReceiptId
+    cashier_ref = CashierRef
+    receipt_date = ReceiptDate
+;
+
+ReceiptId:
+    'Doc. Num.:'
+    header_serial_number = /\w{1,4}/ '/'
+    manager_serial_number = /\w{1,3}/ '/'
+    document_number = /\w{1,8}/
+;
+
+CashierRef:
+    'Vend:'
+    reference = NumberRegEx
+;
+
+ReceiptDate:
+    'Data:'
+    date = DateRegEx
+    time = TimeRegEx
+    'ORIGINAL' | Skip
+;
+
+/* ---------------------------------
+    Information about receipt items
+   ---------------------------------
+ */
+ReceiptItem:
+   quantity = NumberRegEx
+   description = ItemDescriptionRegEx
+   tax = PercentageRegEx
+   unit_price = NumberRegEx
+   item_discount = Discount?
+;
+
+Discount:
+    'DTO'
+    percentage = PercentageRegEx
+    amount = NumberRegEx
+;
+
+TotalWithoutTax:
+    'Incidencia'
+    amount = NumberRegEx
+;
+
+Tax:
+    'Imposto'
+    percentage = PercentageRegEx
+    amount = NumberRegEx
+;
+
+TotalWithTax:
+    'TOTAL'
+    amount = NumberRegEx
+;
+
+Payment:
+    'Entregue' 'Troco'
+    means += MeansOfPayment
+    'CLIENTE' customer = Skip
+    'NIF:' Skip
+    Skip
+    Skip
+;
+
+MeansOfPayment:
+    description = /(\w+\s?)+/
+    given_amount = NumberRegEx
+    exchange = NumberRegEx
+;
+
+/* --------------------------
+    Information about footer
+   --------------------------
+ */
+Refund:
+    'Credito ref. Fatura:'
+    refund_serial_number = /\w{1,4}/ '/'
+    manager_serial_number = /\w{1,3}/ '/'
+    document_number = /\w{1,8}/
+;
+
+CheckSignature:
+    value = Skip
+;
+
+/* ---------------
+    Support types
+   --------------- */
+
+ItemDescriptionRegEx:
+    /([\w\'\-\.\,\/ ]+\s{1,2})+/
+;
+
+ReceiptIdRegEx:
+    /[a-zA-Z0-9-@\/\.\#]+/
+;
+
+DateRegEx:
+    /\d{1,4}\W?\d{1,4}\W?\d{1,4}/
+;
+
+TimeRegEx:
+    /\d{1,2}\W?\d{1,2}(\W?\d{1,2})?(\s)?(am|pm|AM|PM)?/
+;
+
+NumberRegEx:
+    /-?(\d{1,3}([\,\.]?\d{3})*|(\d+))([\.\,]\d{2})?/
+;
+
+Currency:
+    /([A-Z]{1,3}|\$|\€)?\s?\-?(\d{1,3}([\,\.]\d{3})+|(\d+))([\.\,]\d{1,2})?\s?([A-Z]{1,3}|\$|\€)?/
+;
+
+TillRef:
+    /[a-zA-Z0-9]+([\W]?[a-zA-Z0-9]+){1,2}/
+;
+
+Cashier:
+    /[a-zA-Z]{2,}\s?[a-zA-z0-9]{1,}\'?\-?\.?\s?([a-zA-Z]{2,})?\s?([a-zA-Z]{1,})?/
+;
+
+PercentageRegEx:
+    /\-?\s?\%?\s?\d{1,3}([.\,]?\d{1,2})?\s?\%?/
+;
+
+Means:
+	/[a-zA-Z]{2,}\s?[a-zA-z0-9]{1,}\'?\-?\.?\s?([a-zA-Z]{2,})?\s?([a-zA-Z]{1,})?/
+;
+
+SeparatorLineRegEx:
+	/[-=\*\.]*/
+;
+
+Skip:
+    /(?u).*$/
+;
