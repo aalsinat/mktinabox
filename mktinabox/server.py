@@ -69,15 +69,7 @@ class PrinterServer(Dispatcher, object):
         # Called when a client connects to our socket
         client_info = self.accept()
         self.logger.debug('handle_accept() -> %s', client_info[1])
-        #Cashlogy(sock=client_info[0], printer=self.printer)
-        # EchoHandler(sock=client_info[0], printer=self.printer)
-        ICG(sock=client_info[0], printer=self.printer)
-        # We only want to deal with one client at a time,
-        # so close as soon as we set up the handler.
-        # Normally you would not do this and the server
-        # would run forever or until it received instructions
-        # to stop.
-        # self.handle_close()
+        ICG(sock=client_info[0], printer=self.printer, chunk_size=2048)
         return
 
     def init_cashlogy(self):

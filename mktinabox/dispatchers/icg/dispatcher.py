@@ -23,6 +23,7 @@ class ICG(Dispatcher, object):
         self.printer = printer
         self.logger.debug('Dummy printer init')
         self.dummy = Dummy()
+        self.count = 0
         return
 
     def handle_read(self):
@@ -44,7 +45,7 @@ class ICG(Dispatcher, object):
                 self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
             else:
-                self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
+                # self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
                 self.data_to_write.extend(self.dummy.output)
                 self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
@@ -52,7 +53,8 @@ class ICG(Dispatcher, object):
     # Handler support methods
 
     def remove_end_of_ticket(self, ticket):
-        out = re.sub(r"(\x1d\x56\x41).*$", '', ticket)
+        out = re.sub(constants.PAPER_FULL_CUT_B, '', ticket)
+        # out = re.sub(r"(\x1d\x56\x41).*$", '', ticket)
         return out
 
     def remove_esc_pos(self, ticket):
@@ -69,9 +71,9 @@ class ICG(Dispatcher, object):
         # ESC control character
         # esc_char = constants.ESC
         # CAN control character
-        # can_char = constants.CAN
+        can_char = constants.CAN
         # Regular expression for cleaning ESC/POS characters
-        clean_expression = '|'.join([init_printer, select_mode, cut_mode, text_style, text_size])
+        clean_expression = '|'.join([init_printer, select_mode, cut_mode, text_style, text_size, can_char])
         out = re.sub(clean_expression, '', ticket)
         # print 'remove_esc_pos() -> %s' % out
         return out
@@ -87,7 +89,7 @@ class ICG(Dispatcher, object):
                 os.makedirs(directory)
             filename = datetime.now().strftime('%Y%m%d-%H%M%S') + '.txt'
             file_path = os.path.normpath(os.path.join(directory, filename))
-            f = open(file_path, 'w+')
+            f = open(file_path, 'wb+')
             f.write(ticket)
 
     def parse_ticket(self, ticket):
@@ -96,10 +98,10 @@ class ICG(Dispatcher, object):
         if os.path.isfile(filename):
             grammar = Grammar.from_file(filename)
             obj_processor = {
-                'CompanyInfo': self.validate_rule_matching
+                'Detail': self.detail_obj_processor
             }
             grammar.register_obj_processor(obj_processor)
-            ticket_ast = grammar.parse_from_string(ticket.decode('utf-8').encode('ascii', 'ignore'), parse_mode)
+            ticket_ast = grammar.parse_from_string(ticket.decode('Cp1252').encode('ascii', 'replace'), parse_mode)
             self.logger.info('Ticket parsed successfully')
         else:
             self.logger.error('########## Grammar file %s doesn\'t exists #############', filename)
@@ -115,7 +117,7 @@ class ICG(Dispatcher, object):
         self.dummy.set(align='center')
         self.dummy.text('Number of item lines: ')
         self.dummy.set(text_type='B')
-        self.dummy.text(str(len(detail.items)))
+        self.dummy.text(str(len(detail.receipt_items)))
 
         self.dummy.control("CR")
         self.dummy.control("LF")
@@ -123,7 +125,7 @@ class ICG(Dispatcher, object):
         self.dummy.set(align='center')
         self.dummy.text('Means of payment lines: ')
         self.dummy.set(text_type='B')
-        self.dummy.text(str(len(detail.means)))
+        self.dummy.text(str(len(detail.payment.means)))
 
         self.dummy.control("CR")
         self.dummy.control("LF")

@@ -73,5 +73,4 @@ class Grammar(object):
         self._mm.register_obj_processors(processor)
 
     def register_model_processor(self, processor):
-        self._mm.register_obj_processors(
-        )
+        self._mm.register_model_processor(processor)
