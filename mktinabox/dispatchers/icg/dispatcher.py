@@ -47,6 +47,7 @@ class ICG(Dispatcher, object):
             else:
                 # self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
                 self.data_to_write.extend(self.dummy.output)
+                self.log_ticket(self.data_to_write)
                 self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
 
@@ -58,6 +59,7 @@ class ICG(Dispatcher, object):
         return out
 
     def remove_esc_pos(self, ticket):
+        temp = ticket.decode('cp1252').encode('ascii', 'ignore')
         # ESC @ - Initialize printer
         init_printer = constants.HW_INIT
         # ESC ! - Select print mode
@@ -74,7 +76,7 @@ class ICG(Dispatcher, object):
         can_char = constants.CAN
         # Regular expression for cleaning ESC/POS characters
         clean_expression = '|'.join([init_printer, select_mode, cut_mode, text_style, text_size, can_char])
-        out = re.sub(clean_expression, '', ticket)
+        out = re.sub(clean_expression, '', temp)
         # print 'remove_esc_pos() -> %s' % out
         return out
 

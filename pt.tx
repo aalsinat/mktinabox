@@ -10,24 +10,23 @@ Receipt:
 	taxes = ReceiptTaxes
 	means = ReceiptMeans
 	footer = Footer
-	Skip
 ;
 
 /* ===================== HEADER ===================== */
 
 ReceiptHeader:
     company_info = CompanyInfo
-    document_name = /.{40}/
-    document_type = /.{40}/
+    document_name = /.{1,40}/
+    document_type = 'Simplificada'?
     receipt_info = ReceiptInfo
 ;
 
 CompanyInfo:
-    commercial_name = /.{20}/
-    name = /.{14}/
-    market = /.{31}
-    activity = /.{40}/
-    brand = /.{20}/
+    commercial_name = /.{1,20}/
+    name = /.{1,14}/
+    market = /.{1,31}/
+    activity = /.{1,40}/
+    brand = /.{1,20}/
     phone_number = CompanyPhoneNumber
     fiscal_data = FiscalData
     commercial_registry = CommercialRegistry
@@ -39,18 +38,19 @@ CompanyName:
 ;
 
 CommercialRegistry:
-    'Cons. Reg. Com. Cascais n.' number = NumberRegEx
+    'Cons. Reg. Com. Lisboa n.' number = NumberRegEx
 ;
 
 CompanyAddress:
-    'Sede:' address = /.{20}/
-    zip_code = /.{8}/
-    city = /.{6}/
+    'Sede:' address = /.{1,20}/
+    zip_code = /.{1,8}/
+    city = /.{1,6}/
 ;
 
 FiscalData:
-    'NIF:' tax_id = Skip
-    'Cap. Social:' share_capital = CurrencyRegEx
+    'NIF:' tax_id = /.{1,9}/
+    'Cap. Social:' share_capital = NumberRegEx
+    Skip
 ;
 
 CompanyPhoneNumber:
@@ -60,8 +60,7 @@ CompanyPhoneNumber:
 ReceiptInfo:
     receipt_id = ReceiptId
     cashier_ref = CashierRef
-    Skip
-    commercial_name = /.{40}/
+    commercial_name = /.{1,40}/
     receipt_date = ReceiptDate
     Skip
     SeparatorLineRegEx
@@ -69,9 +68,9 @@ ReceiptInfo:
 
 ReceiptId:
     'Doc. Num.:'
-    header_serial_number = /\w{4}/ '/'
-    manager_serial_number = /\w{3}/ '/'
-    document_number = /\w{8}/
+    header_serial_number = /\w{1,4}/ '/'
+    manager_serial_number = /\w{1,3}/ '/'
+    document_number = /\w{1,8}/
 ;
 
 CashierRef:
@@ -95,11 +94,21 @@ ReceiptDetail:
 ;
 
 ReceiptItem:
+    Item | Menu
+;
+
+Item:
    quantity = NumberRegEx
-   description = /.{18}/
+   description = /.{1,18}/
    tax = PercentageRegEx
-   unit_price = NumberRegEx
+   unit_price = NumberRegEx?
    line_discount = LineDiscount?
+;
+
+Menu:
+   quantity = NumberRegEx
+   description = /[^%]{1,35}\s/
+   tax = PercentageRegEx
 ;
 
 LineDiscount:
@@ -110,7 +119,7 @@ LineDiscount:
 
 Discount:
     'ID Desconto:'
-    discount_id = /.{8}/
+    discount_id = /.{1,8}/
     'DTO'
     amount = NumberRegEx
 ;
@@ -130,7 +139,7 @@ Tax:
 ;
 
 TotalWithTax:
-    'TOTAL'
+    'TOTAL:'
     amount = NumberRegEx
 ;
 /* ===================== MEANS ===================== */
@@ -145,7 +154,7 @@ Payment:
 ;
 
 MeansOfPayment:
-    description = /.{27}/
+    description = MeansRegEx
     given_amount = NumberRegEx
 ;
 
@@ -153,29 +162,25 @@ MeansOfPayment:
 
 Footer:
     Skip
-    Skip
     customer_info = CustomerInfo
-    refund = Refund | Skip
+    refund = Refund?
     signature = CheckSignature
-    Skip
-    Skip
-    Skip
+    commands *= EscPosCommand
 ;
 
 CustomerInfo:
-    'Nome:' name = /.{34}/
-    'NIF:' tax_id = /.{12}/
-    address = CustomerAddress | Skip
-    Skip
-    city = CustomerCity | Skip
+    'Nome:' name = /.{1,34}/
+    'NIF:' tax_id = /.{1,12}/
+    address = CustomerAddress?
+    city = CustomerCity?
 ;
 
 CustomerAddress:
-    'Mor.:' value = /.{34}/
+    'Mor.:' value = /.{1,34}/
 ;
 
 CustomerCity:
-    'C.POS:' value = /.{25}/
+    'C.POS:' value = /.{1,25}/
 ;
 
 Refund:
@@ -186,7 +191,11 @@ Refund:
 ;
 
 CheckSignature:
-    value = /.{6}/ Skip
+    value = /.{1,6}/ Skip
+;
+
+EscPosCommand:
+    Skip
 ;
 
 /* ************** Support types **************** */
@@ -204,7 +213,7 @@ TimeRegEx:
 ;
 
 NumberRegEx:
-    /-?(\d{1,3}([\,\.]?\d{3})*|(\d+))([\.\,]\d{2})?/
+    /-?(\d{1,3}([\,\.]?\d{1,3})*|(\d+))([\.\,]\d{2})?/
 ;
 
 CurrencyRegEx:
@@ -223,7 +232,7 @@ PercentageRegEx:
     /\-?\s?\%?\s?\d{1,3}([.\,]?\d{1,2})?\s?\%?/
 ;
 
-Means:
+MeansRegEx:
 	/[a-zA-Z]{2,}\s?[a-zA-z0-9]{1,}\'?\-?\.?\s?([a-zA-Z]{2,})?\s?([a-zA-Z]{1,})?/
 ;
 
