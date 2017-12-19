@@ -45,7 +45,7 @@ class ICG(Dispatcher, object):
                 self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
             else:
-                # self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
+                self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
                 self.data_to_write.extend(self.dummy.output)
                 self.log_ticket(self.data_to_write)
                 self.printer.DirectPrint(printer_name, self.data_to_write)
@@ -100,7 +100,7 @@ class ICG(Dispatcher, object):
         if os.path.isfile(filename):
             grammar = Grammar.from_file(filename)
             obj_processor = {
-                'Detail': self.detail_obj_processor
+                'ReceiptDetail': self.detail_obj_processor
             }
             grammar.register_obj_processor(obj_processor)
             ticket_ast = grammar.parse_from_string(ticket, parse_mode)
@@ -115,29 +115,8 @@ class ICG(Dispatcher, object):
     def detail_obj_processor(self, detail):
         self.dummy.control("CR")
         self.dummy.control("LF")
-
         self.dummy.set(align='center')
-        self.dummy.text('Number of item lines: ')
-        self.dummy.set(text_type='B')
-        self.dummy.text(str(len(detail.receipt_items)))
-
-        self.dummy.control("CR")
-        self.dummy.control("LF")
-
-        self.dummy.set(align='center')
-        self.dummy.text('Means of payment lines: ')
-        self.dummy.set(text_type='B')
-        self.dummy.text(str(len(detail.payment.means)))
-
-        self.dummy.control("CR")
-        self.dummy.control("LF")
-
-        self.dummy.set(align='center')
-        self.dummy.text('Example of barcode: ')
-        self.dummy.control("CR")
-        self.dummy.control("LF")
-
-        self.dummy.barcode('12345678', 'EAN8')
+        self.dummy.qr(u'www.opin.at/areas\x7B\x24sys.cod\x5Fcve\x24\x7D', size=6, native=True)
         self.dummy.control("CR")
         self.dummy.control("LF")
         self.dummy.cut()
