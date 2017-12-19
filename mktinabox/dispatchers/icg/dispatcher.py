@@ -58,7 +58,7 @@ class ICG(Dispatcher, object):
         # out = re.sub(r"(\x1d\x56\x41).*$", '', ticket)
         return out
 
-    def remove_esc_pos(self, ticket):git 
+    def remove_esc_pos(self, ticket):
         encoded_ticket = ticket.decode('cp1252').encode('ascii', 'replace')
         # ESC @ - Initialize printer
         init_printer = constants.HW_INIT
