@@ -38,7 +38,7 @@ CompanyName:
 ;
 
 CommercialRegistry:
-    'Cons. Reg. Com. Lisboa n.' number = NumberRegEx
+    'Cons. Reg. Com. Lisboa n.' number = IntegerRegEx
 ;
 
 CompanyAddress:
@@ -49,12 +49,12 @@ CompanyAddress:
 
 FiscalData:
     'NIF:' tax_id = /.{1,9}/
-    'Cap. Social:' share_capital = NumberRegEx
+    'Cap. Social:' share_capital = IntegerRegEx
     Skip
 ;
 
 CompanyPhoneNumber:
-    'Tel.:' number = NumberRegEx
+    'Tel.:' number = IntegerRegEx
 ;
 
 ReceiptInfo:
@@ -75,7 +75,7 @@ ReceiptId:
 
 CashierRef:
     'Vend:'
-    reference = NumberRegEx
+    reference = IntegerRegEx
 ;
 
 ReceiptDate:
@@ -98,15 +98,15 @@ ReceiptItem:
 ;
 
 Item:
-   quantity = NumberRegEx
-   description = /.{1,18}/
+   quantity = IntegerRegEx
+   description = /.{1,18}\s/
    tax = PercentageRegEx
-   unit_price = NumberRegEx?
+   unit_price = NumberRegEx
    line_discount = LineDiscount?
 ;
 
 Menu:
-   quantity = NumberRegEx
+   quantity = IntegerRegEx
    description = /[^%]{1,35}\s/
    tax = PercentageRegEx
 ;
@@ -212,8 +212,12 @@ TimeRegEx:
     /\d{1,2}\W?\d{1,2}(\W?\d{1,2})?(\s)?(am|pm|AM|PM)?/
 ;
 
+IntegerRegEx:
+    /-?\d+([\,\.]\d{3})*/
+;
+
 NumberRegEx:
-    /-?(\d{1,3}([\,\.]?\d{1,3})*|(\d+))([\.\,]\d{2})?/
+    /-?(\d+([\,\.]\d{3})*|(\d+))[\.\,]\d{2}/
 ;
 
 CurrencyRegEx:

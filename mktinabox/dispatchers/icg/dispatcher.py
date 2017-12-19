@@ -1,9 +1,9 @@
-import re
 import os
+import re
 from datetime import datetime
 
-from textx.exceptions import TextXError
 from escpos.printer import Dummy
+from textx.exceptions import TextXError
 
 from mktinabox.conf import settings, BASE_DIR
 from mktinabox.grammar.grammar import Grammar
@@ -59,7 +59,7 @@ class ICG(Dispatcher, object):
         return out
 
     def remove_esc_pos(self, ticket):
-        temp = ticket.decode('cp1252').encode('ascii', 'ignore')
+        encoded_ticket = ticket.decode('cp1252').encode('ascii', 'replace')
         # ESC @ - Initialize printer
         init_printer = constants.HW_INIT
         # ESC ! - Select print mode
@@ -76,9 +76,9 @@ class ICG(Dispatcher, object):
         can_char = constants.CAN
         # Regular expression for cleaning ESC/POS characters
         clean_expression = '|'.join([init_printer, select_mode, cut_mode, text_style, text_size, can_char])
-        out = re.sub(clean_expression, '', temp)
+        cleaned_ticket = re.sub(clean_expression, '', encoded_ticket)
         # print 'remove_esc_pos() -> %s' % out
-        return out
+        return cleaned_ticket
 
     def _hasattr(self, model, attribute):
         return attribute in [attr for attr in dir(model) if not attr.startswith('__')]
@@ -103,7 +103,7 @@ class ICG(Dispatcher, object):
                 'Detail': self.detail_obj_processor
             }
             grammar.register_obj_processor(obj_processor)
-            ticket_ast = grammar.parse_from_string(ticket.decode('Cp1252').encode('ascii', 'replace'), parse_mode)
+            ticket_ast = grammar.parse_from_string(ticket, parse_mode)
             self.logger.info('Ticket parsed successfully')
         else:
             self.logger.error('########## Grammar file %s doesn\'t exists #############', filename)
