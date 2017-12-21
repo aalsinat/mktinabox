@@ -15,7 +15,7 @@ import sys
 
 from mktinabox.conf import settings, BASE_DIR
 from mktinabox.dispatchers import Dispatcher
-from mktinabox.dispatchers.icg.dispatcher import ICG
+from mktinabox.dispatchers.icg import ICG
 
 
 class PrinterServer(Dispatcher, object):

@@ -10,6 +10,8 @@ from mktinabox.grammar.grammar import Grammar
 from mktinabox.printer import constants
 from .. import Dispatcher
 
+from mktinabox.handlers.qrsurvey import QRSurvey
+
 
 class ICG(Dispatcher, object):
     """
@@ -21,8 +23,7 @@ class ICG(Dispatcher, object):
         self.chunk_size = chunk_size
         self.data_to_write = None
         self.printer = printer
-        self.logger.debug('Dummy printer init')
-        self.dummy = Dummy()
+        self.dummy = None
         self.count = 0
         return
 
@@ -100,23 +101,23 @@ class ICG(Dispatcher, object):
         if os.path.isfile(filename):
             grammar = Grammar.from_file(filename)
             obj_processor = {
-                'ReceiptDetail': self.detail_obj_processor
+                'Receipt': self.apply_handler
             }
             grammar.register_obj_processor(obj_processor)
-            ticket_ast = grammar.parse_from_string(ticket, parse_mode)
+            ticket_model = grammar.parse_from_string(ticket, parse_mode)
             self.logger.info('Ticket parsed successfully')
+            # At this point we must decide how to call the chain of managers that are active.
+            # We could consider that even the parsing of the ticket was considered as a handler.
+            self.apply_handler(ticket_model)
         else:
             self.logger.error('########## Grammar file %s doesn\'t exists #############', filename)
 
-    def validate_rule_matching(self, model):
-        self.logger.info('Parsed value for CompanyInfo')
-        pass
-
-    def detail_obj_processor(self, detail):
-        self.dummy.control("CR")
-        self.dummy.control("LF")
-        self.dummy.set(align='center')
-        self.dummy.qr(u'www.opin.at/areas\x7B\x24sys.cod\x5Fcve\x24\x7D', size=6, native=True)
-        self.dummy.control("CR")
-        self.dummy.control("LF")
+    def apply_handler(self, receipt):
+        self.dummy = QRSurvey().handle_request(receipt)
+        # self.dummy.control("CR")
+        # self.dummy.control("LF")
+        # self.dummy.set(align='center')
+        # self.dummy.qr(u'www.opin.at/areas\x7B\x24sys.cod\x5Fcve\x24\x7D', size=6, native=True)
+        # self.dummy.control("CR")
+        # self.dummy.control("LF")
         self.dummy.cut()
