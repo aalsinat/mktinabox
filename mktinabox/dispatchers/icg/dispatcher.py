@@ -46,10 +46,10 @@ class ICG(Dispatcher, object):
                 self.printer.DirectPrint(printer_name, self.data_to_write)
                 self.data_to_write = None
             else:
-                self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
+                #self.data_to_write = self.remove_end_of_ticket(self.data_to_write)
                 self.data_to_write.extend(self.dummy.output)
-                self.log_ticket(self.data_to_write)
                 self.printer.DirectPrint(printer_name, self.data_to_write)
+                self.log_ticket(self.data_to_write)
                 self.data_to_write = None
 
     # Handler support methods
@@ -100,10 +100,6 @@ class ICG(Dispatcher, object):
         filename = os.path.normpath(os.path.join(BASE_DIR, settings.grammar['path'], settings.grammar['name']))
         if os.path.isfile(filename):
             grammar = Grammar.from_file(filename)
-            obj_processor = {
-                'Receipt': self.apply_handler
-            }
-            grammar.register_obj_processor(obj_processor)
             ticket_model = grammar.parse_from_string(ticket, parse_mode)
             self.logger.info('Ticket parsed successfully')
             # At this point we must decide how to call the chain of managers that are active.
@@ -114,10 +110,4 @@ class ICG(Dispatcher, object):
 
     def apply_handler(self, receipt):
         self.dummy = QRSurvey().handle_request(receipt)
-        # self.dummy.control("CR")
-        # self.dummy.control("LF")
-        # self.dummy.set(align='center')
-        # self.dummy.qr(u'www.opin.at/areas\x7B\x24sys.cod\x5Fcve\x24\x7D', size=6, native=True)
-        # self.dummy.control("CR")
-        # self.dummy.control("LF")
         self.dummy.cut()

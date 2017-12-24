@@ -128,7 +128,7 @@ Discount:
 
 ReceiptTaxes:
     taxes_header = Skip
-    taxes += Tax
+    taxes *= Tax
     total = TotalWithTax
 ;
 
@@ -150,7 +150,7 @@ ReceiptMeans:
 
 Payment:
     means += MeansOfPayment
-    'Troco:' exchange = NumberRegEx
+    troco += Troco
 ;
 
 MeansOfPayment:
@@ -158,21 +158,34 @@ MeansOfPayment:
     given_amount = NumberRegEx
 ;
 
+Troco:
+    'Troco:' exchange = NumberRegEx
+;
+
 /* ===================== FOOTER ===================== */
 
 Footer:
-    Skip
+    Skip /* Doc. Liquidado no momento da emissao */
+    CancellationDocument?
     customer_info = CustomerInfo
     refund = Refund?
     signature = CheckSignature
     commands *= EscPosCommand
 ;
 
+CancellationDocument:
+    'DOCUMENTO PARA ANULAR' Skip
+;
+
 CustomerInfo:
-    'Nome:' name = /.{1,34}/
+    name = CustomerName?
     'NIF:' tax_id = /.{1,12}/
     address = CustomerAddress?
     city = CustomerCity?
+;
+
+CustomerName:
+    'Nome:' value = /.{1,34}/?
 ;
 
 CustomerAddress:
