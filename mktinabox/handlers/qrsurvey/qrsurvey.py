@@ -76,18 +76,11 @@ class QRSurvey(Handler):
         self.__dummy.control('CR')
         self.__dummy.control('LF')
 
-        # Queda pendent muntar el qr en base a les propietats i valors del ticket
-        # http://opin.at/she?ac=qr&sc={$sys.cod_cve$}&id={$ticket.serie$}/{$ticket.numero$}X{$ticket.tpv$}
-        # settings.sys['cod_cve']
-        # settings.sys['tpv']
-        # ticket.header.receipt_info.receipt_id.header_serial_number
-        # ticket.header.receipt_info.receipt_id.document_number
-
-        qrtext = r'http://opin.at/she?ac=qr&sc={0}&id={1}/{2}X{3}'.format(settings.sys['cod_cve'].strip(),
-                                                                          ticket.header.receipt_info.receipt_id.header_serial_number.strip(),
-                                                                          ticket.header.receipt_info.receipt_id.document_number.strip(),
-                                                                          settings.sys['tpv'].strip())
-        urltext = r'www.opin.at/areas{0}'.format(settings.sys['cod_cve'].strip())
+        qrtext = settings.qrsurvey['urlqr'].format(cod_cve=settings.sys['cod_cve'].strip(),
+                                                   serial_number=ticket.header.receipt_info.receipt_id.header_serial_number.strip(),
+                                                   document_number=ticket.header.receipt_info.receipt_id.document_number.strip(),
+                                                   tpv=settings.sys['tpv'].strip())
+        urltext = settings.qrsurvey['urltext'].format(cod_cve=settings.sys['cod_cve'].strip())
 
         self.__dummy.qr(content=qrtext, size=6, native=True)
         self.__dummy.control('CR')
