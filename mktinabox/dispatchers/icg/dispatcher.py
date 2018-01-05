@@ -65,6 +65,8 @@ class ICG(Dispatcher, object):
         init_printer = constants.HW_INIT
         # ESC ! - Select print mode
         select_mode = constants.SET_MODE('.')
+        # ESC t n - Select character code table
+        select_code_table = constants.SET_CODEPAGE('.')
         # GS V - Select cut mode and cut paper
         cut_mode = constants.CUT_PAPER('.')
         # ESC E - Text bold
@@ -76,7 +78,7 @@ class ICG(Dispatcher, object):
         # CAN control character
         can_char = constants.CAN
         # Regular expression for cleaning ESC/POS characters
-        clean_expression = '|'.join([init_printer, select_mode, cut_mode, text_style, text_size, can_char])
+        clean_expression = '|'.join([init_printer, select_mode, select_code_table, cut_mode, text_style, text_size, can_char])
         cleaned_ticket = re.sub(clean_expression, '', encoded_ticket)
         # print 'remove_esc_pos() -> %s' % out
         return cleaned_ticket

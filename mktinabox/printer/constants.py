@@ -139,6 +139,7 @@ LINESPACING_FUNCS = {
 # Prefix to change the codepage. You need to attach a byte to indicate
 # the codepage to use. We use escpos-printer-db as the data source.
 CODEPAGE_CHANGE = ESC + b'\x74'
+SET_CODEPAGE = lambda n: CODEPAGE_CHANGE + n
 
 # Barcode format
 _SET_BARCODE_TXT_POS = lambda n: GS + b'H' + n

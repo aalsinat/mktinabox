@@ -36,8 +36,8 @@ CompanyPhoneNumber:
 ;
 
 FiscalData:
-    'N.C.:' tax_id = /.{1,9}/
-    'Cap. Social:' share_capital = IntegerRegEx
+    'N.C:' tax_id = /.{1,9}/
+    'Cap.Social:' share_capital = IntegerRegEx
     Skip
 ;
 
@@ -61,7 +61,7 @@ ReceiptInfo:
 ;
 
 ReceiptId:
-    'Doc. Num.:'
+    'Doc.Num.:'
     header_serial_number = /\w{1,4}/ '/'
     document_number = /\w{1,8}/
 ;
@@ -98,7 +98,7 @@ ReceiptItem:
 ;
 
 LineDiscount:
-    '- Desconto:'
+    '-  Desconto:'
     percentage = PercentageRegEx
     amount = NumberRegEx
 ;
@@ -144,7 +144,7 @@ Tax:
 ;
 
 TotalWithTax:
-    'TOTAL:'
+    'TOTAL :'
     amount = NumberRegEx Skip
 ;
 
@@ -156,7 +156,7 @@ ReceiptMeans:
 
 Payment:
     means += MeansOfPayment
-    troco += Troco
+    troco *= Troco
 ;
 
 MeansOfPayment:
