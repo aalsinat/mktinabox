@@ -69,7 +69,8 @@ class QRSurvey(Handler):
 
         self.__dummy.set(align='center', height=2)
         for lang in languages:
-            self.__dummy.text(Encoding.decode(settings.qrsurvey['message.' + lang]).decode('cp850'))
+            self.__dummy.text(settings.qrsurvey['message.' + lang])
+            self.__dummy.text(Encoding.decode(settings.qrsurvey['message.' + lang]))
             self.__dummy.control('CR')
             self.__dummy.control('LF')
 
@@ -99,7 +100,8 @@ class QRSurvey(Handler):
 
         self.__dummy._raw(ESC + b'!\x01')
         for lang in languages:
-            self.__dummy.text(Encoding.decode(settings.qrsurvey['legal.' + lang]).decode('cp850'))
+            self.__dummy.text(settings.qrsurvey['legal.' + lang])
+            # self.__dummy.text(Encoding.decode(settings.qrsurvey['legal.' + lang]).decode('cp850'))
             self.__dummy.control('CR')
             self.__dummy.control('LF')
 

@@ -2,7 +2,7 @@
 import os
 import sys
 from mktinabox.core.exceptions import ImproperlyConfigured
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from mktinabox.utils.functional import LazyObject, empty
 
 

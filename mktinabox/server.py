@@ -28,8 +28,10 @@ class PrinterServer(Dispatcher, object):
         Dispatcher.__init__(self, sock=None)
         self.logger.debug('Initialize printer: %s', printer_name)
         if sys.platform == 'win32':
-            from printer.win32 import Printer
+            from .printer.printer import Printer
             self.printer = Printer(printer_name)
+            #from .printer.win32 import Printer
+            #self.printer = Printer(printer_name)
         else:
             self.printer = None
 

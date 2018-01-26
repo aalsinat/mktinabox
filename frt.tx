@@ -42,7 +42,8 @@ FiscalData:
 ;
 
 CommercialRegistry:
-    'Cons. Reg. Com. Lisboa n.' number = IntegerRegEx
+    'Cons. Reg. Com. Lisboa n.' |  'Cons. Reg. Com. Lisboa n.' | 'Cons. Reg. Com.Santarem:'
+    number = IntegerRegEx
 ;
 
 CompanyAddress:
@@ -89,12 +90,15 @@ ReceiptDetail:
 ;
 
 ReceiptItem:
-   quantity = IntegerRegEx
+   quantity = LineQuantity
    description = /.{1,18}\s/
    tax = PercentageRegEx
    unit_price = NumberRegEx
    line_discount = LineDiscount?
    item_reference = ItemReference
+;
+LineQuantity:
+     NumberRegEx | IntegerRegEx
 ;
 
 LineDiscount:

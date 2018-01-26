@@ -49,7 +49,7 @@ class Grammar(object):
         try:
             return self._mm.model_from_str(input_string, debug=debug)
         except TextXError as e:
-            self.logger.error('Error creating model from file: %s -> (line: %s, col: %s)', e.message, e.line, e.col)
+            self.logger.error('Error creating model from file: %s -> (line: %s, col: %s)', e.args, e.line, e.col)
             raise e
         finally:
             self.logger.setLevel(logging.INFO)
@@ -66,7 +66,7 @@ class Grammar(object):
         try:
             return self._mm.model_from_file(input_file, encoding='utf-8', debug=debug)
         except TextXError as e:
-            self.logger.error('Error creating model from file: %s -> (line: %s, col: %s)', e.message, e.line, e.col)
+            self.logger.error('Error creating model from file: %s -> (line: %s, col: %s)', e.args, e.line, e.col)
             raise e
         finally:
             self.logger.setLevel(logging.INFO)

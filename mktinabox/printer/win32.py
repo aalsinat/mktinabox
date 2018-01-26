@@ -109,18 +109,18 @@ class Printer:
                             time.sleep(lnBufferWait)
                         sts = self.WritePrinter(bchunk)
                         if sts:
-                            print "print win32 OK!"
+                            print("print win32 OK!")
                             pass
                         else:
-                            print "Error WritePrinter chunk [%s]" % (lnN)
+                            print("Error WritePrinter chunk [%s]" % lnN)
                         lnN = lnN + 1
                     time.sleep(.1)
                     self.EndPagePrinter()
                 else:
-                    print "Error startpageprinter"
+                    print("Error startpageprinter")
                 self.EndDocPrinter()
             else:
-                print "Error StarDocPrinter"
+                print("Error StarDocPrinter")
             self.ClosePrinter()
         else:
-            print "Error openprinter"
+            print("Error openprinter")

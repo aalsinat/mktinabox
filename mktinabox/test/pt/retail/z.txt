@@ -1,0 +1,56 @@
+@! 
+
+! ----------------------------------------
+Empresa: AREAS PORTUGAL
+NIF    : 502604794
+Endere‡o:     RUA C, EDIF.124 - 3
+TESTES REST
+LOCAL DE TESTES
+Total Z Diario  : 000000005 Caix: X1
+Fatura Da     : 000000077 A 000000077
+Comprovativos emitidos: 1
+Data : 09-01-2018 Hora: 15:56:43
+VENDEDOR: Admin ALCACER            
+----------------------------------------
+
+
+!       VENDAS POR FORMA DE PAGTO.       
+! !FORMA DE PAGT                        MONTANTE      N. OP
+--------------------------------------------------------
+1      Dinheiro Euros                   6,90           1
+                           ================= ===========
+                                        6,90           1
+
+
+!             QUADRO DE CAIXA            
+! !DINHEIRO EUROS                
+--------------------------------------------------------
+     1 VENDAS(Positivas)                          6,90
+
+       TOTAL DE VENDAS                            6,90 =
+
+    -- FUNDO + ENTRADAS COFRE                    75,00 +
+--------------------------------------------------------
+TOTAL CALCULADO  Dinheiro Eur                      81,90
+
+
+RESUMO                     
+!--------------------------------------------------------
+FORMA DE PAGTO                                   CALCUL.
+--------------------------------------------------------
+  1 Dinheiro E                                     81,90
+
+TOTAL :      
+     tÕ                                             81,90
+
+CONTROLO DE CAIXA
+--------------------------------------------------------
+NOVA FIAN‡A Dinheiro Euros                         75,00
+
+!--------------------------------------------------------
+                VENTAS(Pos.)      CRDITOSOTAL DE VENDAS
+--------------------------------------------------------
+                        6,90          0,00          6,90
+
+
+VA @

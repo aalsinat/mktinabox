@@ -17,7 +17,7 @@ class Encoding(object):
     @staticmethod
     def __ascii_replace(match):
         s = match.group()
-        return binascii.unhexlify(s[2:])
+        return binascii.unhexlify(s[2:]).decode()
 
     @staticmethod
     def decode(input_string):
