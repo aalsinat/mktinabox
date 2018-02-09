@@ -22,6 +22,10 @@ ReceiptHeader:
 ;
 
 CompanyInfo:
+	RetailCompanyInfo | AdolfoDomingoInfo
+;
+
+RetailCompanyInfo:
     name = /.{1,22}/
     commercial_name = /.{1,40}/
     activity = /.{1,40}/
@@ -29,6 +33,16 @@ CompanyInfo:
     fiscal_data = FiscalData
     commercial_registry = CommercialRegistry
     address = CompanyAddress
+;
+AdolfoDomingoInfo:
+	name = /.{1,22}/
+	market = /.{1,30}/
+	'ADOLFO DOMINGUEZ'
+	address2 = /.{1,40}/
+    phone_number = CompanyPhoneNumber
+    fiscal_data = FiscalData
+    commercial_registry = CommercialRegistry
+	address = CompanyAddress
 ;
 
 CompanyPhoneNumber:
@@ -42,7 +56,9 @@ FiscalData:
 ;
 
 CommercialRegistry:
-    'Cons. Reg. Com. Lisboa n.' |  'Cons. Reg. Com. Lisboa n.' | 'Cons. Reg. Com.Santarem:'
+    ('Cons. Reg. Com. Lisboa n.' |
+    'Cons. Reg. Com.Santarem:' |
+    'Cons. Reg. Com. Sintra n.')
     number = IntegerRegEx
 ;
 
@@ -55,8 +71,9 @@ CompanyAddress:
 ReceiptInfo:
     receipt_id = ReceiptId
     cashier_ref = CashierRef
-    commercial_name = /.{1,40}/
+    commercial_name = CommercialName
     receipt_date = ReceiptDate
+    Copy?
     Skip
     SeparatorLineRegEx
 ;
@@ -64,12 +81,15 @@ ReceiptInfo:
 ReceiptId:
     'Doc.Num.:'
     header_serial_number = /\w{1,4}/ '/'
-    document_number = /\w{1,8}/
+    document_number = /[\w\.\,]{1,8}/
 ;
 
 CashierRef:
     'Vend.:'
     reference = IntegerRegEx
+;
+CommercialName:
+    /.{1,30}/ 'LOJA:210' | /.{1,40}/
 ;
 
 ReceiptDate:
@@ -77,6 +97,10 @@ ReceiptDate:
     date = DateRegEx
     time = TimeRegEx
     'ORIGINAL'
+;
+
+Copy:
+    'Segunda Via'
 ;
 
 /* ===================== DETAIL ===================== */
@@ -90,15 +114,16 @@ ReceiptDetail:
 ;
 
 ReceiptItem:
-   quantity = LineQuantity
+   quantity = Quantity
    description = /.{1,18}\s/
    tax = PercentageRegEx
    unit_price = NumberRegEx
    line_discount = LineDiscount?
    item_reference = ItemReference
 ;
-LineQuantity:
-     NumberRegEx | IntegerRegEx
+
+Quantity:
+    IntegerRegEx | NumberRegEx
 ;
 
 LineDiscount:
@@ -250,7 +275,7 @@ NumberRegEx:
 ;
 
 CurrencyRegEx:
-    /([A-Z]{1,3}|\$|\€)?\s?\-?(\d{1,3}([\,\.]\d{3})+|(\d+))([\.\,]\d{1,2})?\s?([A-Z]{1,3}|\$|\€)?/
+    /([A-Z]{1,3}|\$|\?)?\s?\-?(\d{1,3}([\,\.]\d{3})+|(\d+))([\.\,]\d{1,2})?\s?([A-Z]{1,3}|\$|\?)?/
 ;
 
 TillRef:
