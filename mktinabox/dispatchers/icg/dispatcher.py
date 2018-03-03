@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import os
 import re
 from datetime import datetime
@@ -82,11 +83,11 @@ class ICG(Dispatcher, object):
         # GS ! - Text size
         text_size = constants.SET_SIZE(b'.')
         # ESC control character
-        # esc_char = constants.ESC
+        esc_char = constants.ESC
         # CAN control character
         can_char = constants.CAN
         # Regular expression for cleaning ESC/POS characters
-        clean_expression = b'|'.join([init_printer, select_mode, select_code_table, cut_mode, text_style, text_size, can_char])
+        clean_expression = b'|'.join([init_printer, select_mode, select_code_table, cut_mode, text_style, text_size, can_char, esc_char])
         cleaned_ticket = re.sub(clean_expression, b'', encoded_ticket)
         # print 'remove_esc_pos() -> %s' % out
         return cleaned_ticket

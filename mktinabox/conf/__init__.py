@@ -1,8 +1,9 @@
-
+# -*- coding: UTF-8 -*-
 import os
 import sys
+import locale
 from mktinabox.core.exceptions import ImproperlyConfigured
-from configparser import SafeConfigParser
+from configparser import SafeConfigParser, ConfigParser
 from mktinabox.utils.functional import LazyObject, empty
 
 
@@ -72,13 +73,20 @@ class LazySettings(LazyObject):
 
 
 class Settings(object):
+    """
+    En aquest punt hem de prendre la decisió de establir la codificació amb la que volem
+    treballar sempre. Si establim que sera UT
+    """
 
     def __init__(self, settings_module):
         # update the dict from global settings
-        self.SETTINGS_MODULE = os.path.join(BASE_DIR, os.environ.get(ENVIRONMENT_SETTINGS))
+        # self.SETTINGS_MODULE = os.path.join(BASE_DIR, os.environ.get(ENVIRONMENT_SETTINGS))
+        self.SETTINGS_MODULE = os.path.join(BASE_DIR, settings_module)
         # Load properties file
-        reader_config = SafeConfigParser()
-        reader_config.read(self.SETTINGS_MODULE)
+        language_code, encoding = locale.getdefaultlocale()
+        reader_config = ConfigParser()
+        # reader_config = SafeConfigParser()
+        reader_config.read(self.SETTINGS_MODULE, encoding=encoding)
         for section in reader_config.sections():
             setattr(self, section, dict(reader_config.items(section)))
 

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import locale
 import os
 
@@ -70,7 +71,7 @@ class QRSurvey(Handler):
         self.__dummy.set(align='center', height=2)
         for lang in languages:
             self.__dummy.text(settings.qrsurvey['message.' + lang])
-            self.__dummy.text(Encoding.decode(settings.qrsurvey['message.' + lang]))
+            # self.__dummy.text(Encoding.decode(settings.qrsurvey['message.' + lang]))
             self.__dummy.control('CR')
             self.__dummy.control('LF')
 

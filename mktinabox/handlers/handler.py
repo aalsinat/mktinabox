@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
 Avoid coupling the sender of a request to its receiver by giving
 more than one object a chance to handle the request. Chain the receiving
