@@ -15,7 +15,7 @@ MarkupSafe==1.0
 olefile==0.44
 Pillow==4.2.1
 py==1.5.2
-Pygments==2.2.0
+Pygments==2.7.4
 PyInstaller==3.2.1
 pyserial==3.0.1
 pytest==3.2.5
