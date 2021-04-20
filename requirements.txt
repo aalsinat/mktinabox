@@ -14,7 +14,7 @@ Jinja2==2.10
 MarkupSafe==1.0
 olefile==0.44
 Pillow==4.2.1
-py==1.5.2
+py==1.10.0
 Pygments==2.2.0
 PyInstaller==3.2.1
 pyserial==3.0.1
