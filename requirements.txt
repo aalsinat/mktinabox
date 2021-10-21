@@ -2,7 +2,7 @@ alabaster==0.7.10
 appdirs==1.4.3
 argcomplete==1.9.2
 Arpeggio==1.6.1
-Babel==2.5.1
+Babel==2.9.1
 certifi==2017.11.5
 chardet==3.0.4
 cx-Freeze==5.0.2
